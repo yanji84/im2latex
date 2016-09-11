@@ -72,7 +72,7 @@ def train_digit_sequence():
     clasDict['8'] = 9
     clasDict['9'] = 10
     clasDict['*'] = 11
-    dataLoader = DataLoader("/Users/jiyan/Downloads/train/", image_dim, clasDict, n_classes, n_steps, debug=False)
+    dataLoader = DataLoader("train/", image_dim, clasDict, n_classes, n_steps, debug=False)
 
     # Launch the graph
     with tf.Session() as sess:
