@@ -56,19 +56,25 @@ class DataLoader(object):
         startIdx = self.train_idx
         endIdx = self.train_idx + batch_size
 
+        if endIdx >= len(self.train_x):
+            endIdx = len(self.train_x) - 1
+
         images = self.train_images[startIdx:endIdx]
         x = self.train_x[startIdx:endIdx]
         y = self.train_y[startIdx:endIdx]
         mask = self.train_mask[startIdx:endIdx]
 
         self.train_idx = endIdx
-        if self.train_idx > len(self.train_x):
+        if self.train_idx >= len(self.train_x):
             self.train_idx = 0
         return x,y,images,mask
 
     def next_test_batch(self, batch_size):
         startIdx = self.test_idx
         endIdx = self.test_idx + batch_size
+
+        if endIdx >= len(self.train_x):
+            endIdx = len(self.train_x) - 1
 
         images = self.test_images[startIdx:endIdx]
         x = self.test_x[startIdx:endIdx]
