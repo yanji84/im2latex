@@ -65,7 +65,7 @@ class DataLoader(object):
         mask = self.train_mask[startIdx:endIdx]
 
         self.train_idx = endIdx
-        if self.train_idx >= len(self.train_x):
+        if self.train_idx >= len(self.train_x) - 1:
             self.train_idx = 0
         return x,y,images,mask
 
@@ -82,6 +82,6 @@ class DataLoader(object):
         mask = self.test_mask[startIdx:endIdx]
 
         self.test_idx = endIdx
-        if self.test_idx > len(self.test_x):
+        if self.test_idx >= len(self.test_x) - 1:
             self.test_idx = 0
         return x,y,images,mask
