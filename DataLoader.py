@@ -73,8 +73,8 @@ class DataLoader(object):
         startIdx = self.test_idx
         endIdx = self.test_idx + batch_size
 
-        if endIdx >= len(self.train_x):
-            endIdx = len(self.train_x) - 1
+        if endIdx >= len(self.test_x):
+            endIdx = len(self.test_x) - 1
 
         images = self.test_images[startIdx:endIdx]
         x = self.test_x[startIdx:endIdx]
