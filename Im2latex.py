@@ -31,10 +31,14 @@ def setup_summaries():
     summary_op = tf.merge_all_summaries()
     return summary_placeholders, update_ops, summary_op
 
+def showSamples(sample, data):
+    print str(sample) + ", " + str(data)
+
 def calculate_accuracy(samples, batch_x):
     step = 0.0
     correct = 0.0
     for i in range(len(samples)):
+        showSamples(samples[i], batch_x[i])
         for j in range(len(samples[i])):
             if j != 0:
                 if samples[i][j] == batch_x[i][j]:
