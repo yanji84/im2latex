@@ -55,7 +55,7 @@ def train_digit_sequence():
     mask = tf.placeholder(shape = (None, n_steps), dtype=tf.float32)
     image= tf.placeholder(shape = (None, image_dim, image_dim, n_channels), dtype=tf.float32)
     rnn = RecurrentNet("recurrent_net", x, y , image, mask)
-    cost,generated = rnn.lstm_forward()
+    cost,generated,generated_logits = rnn.lstm_forward()
     generated = rnn.sample()
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
@@ -97,10 +97,10 @@ def train_digit_sequence():
             sess.run(optimizer, feed_dict={x: batch_x, y: batch_y,
                                            image: images, mask: masks})
             if step % display_step == 0:
-                loss,training_generated = sess.run([cost, generated], feed_dict={x: batch_x, y: batch_y,
+                loss,training_generated, logits = sess.run([cost, generated, generated_logits], feed_dict={x: batch_x, y: batch_y,
                                            image: images, mask: masks})
                 train_acc = calculate_accuracy(training_generated, batch_x)
-                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc))
+                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc) + ", logits=" + str(logits))
 
                 test_batch_x, test_batch_y, test_images, test_masks = dataLoader.next_test_batch(batch_size)
                 samples = sess.run(generated, feed_dict={x: test_batch_x, y: test_batch_y,

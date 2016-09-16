@@ -71,6 +71,7 @@ class RecurrentNet(object):
 
     def lstm_forward(self):
         generated = []
+        generated_logits = []
         features = self.ctx_convnet.extract_conv_features(self.image)
         features = tf.reshape(features, [-1, 7*7*64])
         h0 = tf.matmul(features, self.intial_context_w) + self.intial_context_b
@@ -87,9 +88,9 @@ class RecurrentNet(object):
             if t < self.n_steps - 1:
                 hprev, cprev, attprev = self.lstm_step_forward(x[t,:], hprev, cprev, attprev)
                 logits = tf.matmul(hprev, self.Wfc) + self.bfc
+                generated_logits.append(logits)
                 xt = tf.cast(tf.argmax(logits, 1), tf.int32)
-                pred = tf.nn.softmax(logits)
-                cost_at_t = -tf.reduce_sum(y[t,:,:] * tf.log(pred), reduction_indices=[1])
+                cost_at_t = tf.nn.softmax_cross_entropy_with_logits(logits, y[t,:,:])
                 #batch_cost_at_t = tf.nn.softmax_cross_entropy_with_logits(logits, y[t,:,:])
                 #batch_cost_at_t_after_mask = tf.mul(batch_cost_at_t, mask[t,:])
                 #avg_cost_at_t = tf.reduce_mean(batch_cost_at_t_after_mask)
@@ -99,7 +100,9 @@ class RecurrentNet(object):
         cost = tf.reduce_mean(tf.reduce_sum(costs, reduction_indices=[0]))        
         generated = tf.pack(generated)
         generated = tf.transpose(generated, perm=[1,0])
-        return cost, generated
+        generated_logits = tf.pack(generated_logits)
+        generated_logits = tf.transpose(generated_logits, perm=[1,0])
+        return cost, generated, generated_logits
 
     def sample(self):
         generated = []
