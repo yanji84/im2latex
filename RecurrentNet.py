@@ -79,7 +79,7 @@ class RecurrentNet(object):
         mask = tf.transpose(self.mask, perm=[1,0])
         y = tf.transpose(self.y, perm=[1,0,2])
         hprev = h0
-        cprev = 0
+        cprev = 0.0
         attprev = features
         costs = []
         xt = x[0,:]

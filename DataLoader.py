@@ -49,7 +49,7 @@ class DataLoader(object):
                     y.append(onehot)
                 ys.append(y)
                 print f
-                if debug and len(xs) > 20:
+                if debug and len(xs) > 1:
                     break
 
     def next_train_batch(self, batch_size):
