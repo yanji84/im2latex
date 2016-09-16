@@ -88,9 +88,12 @@ class RecurrentNet(object):
                 hprev, cprev, attprev = self.lstm_step_forward(x[t,:], hprev, cprev, attprev)
                 logits = tf.matmul(hprev, self.Wfc) + self.bfc
                 xt = tf.cast(tf.argmax(logits, 1), tf.int32)
-                batch_cost_at_t = tf.nn.softmax_cross_entropy_with_logits(logits, y[t,:,:])
-                batch_cost_at_t_after_mask = tf.mul(batch_cost_at_t, mask[t,:])
-                avg_cost_at_t = tf.reduce_mean(batch_cost_at_t_after_mask)
+                pred = tf.nn.softmax(logits)
+                avg_cost_at_t = tf.reduce_mean(-tf.reduce_sum(y[t,:,:] * tf.log(pred), reduction_indices=[1]))
+                #batch_cost_at_t = tf.nn.softmax_cross_entropy_with_logits(logits, y[t,:,:])
+                #batch_cost_at_t_after_mask = tf.mul(batch_cost_at_t, mask[t,:])
+                #avg_cost_at_t = tf.reduce_mean(batch_cost_at_t_after_mask)
+                #avg_cost_at_t = tf.reduce_mean(batch_cost_at_t_after_mask)
                 cost = tf.add(cost, avg_cost_at_t)
         
         generated = tf.pack(generated)
