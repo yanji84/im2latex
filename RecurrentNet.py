@@ -101,7 +101,7 @@ class RecurrentNet(object):
         generated = tf.pack(generated)
         generated = tf.transpose(generated, perm=[1,0])
         generated_logits = tf.pack(generated_logits)
-        generated_logits = tf.transpose(generated_logits, perm=[1,0])
+        generated_logits = tf.transpose(generated_logits, perm=[1,0,2])
         return cost, generated, generated_logits
 
     def sample(self):
