@@ -38,7 +38,7 @@ def calculate_accuracy(samples, batch_x):
     step = 0.0
     correct = 0.0
     for i in range(len(samples)):
-        showSamples(samples[i], batch_x[i])
+        #showSamples(samples[i], batch_x[i])
         for j in range(len(samples[i])):
             if j != 0:
                 if samples[i][j] == batch_x[i][j]:
@@ -82,9 +82,9 @@ def train_digit_sequence():
     with tf.Session() as sess:
         sess.run(init)
 
-        writer = tf.train.SummaryWriter("/tmp/im2latex_logs", sess.graph)
+        writer = tf.train.SummaryWriter("logs", sess.graph)
 
-        checkpoint = tf.train.get_checkpoint_state("/tmp")
+        checkpoint = tf.train.get_checkpoint_state("model/")
         if checkpoint and checkpoint.model_checkpoint_path:
             saver.restore(sess, checkpoint.model_checkpoint_path)
             print "successfully loaded checkpoint"
@@ -100,15 +100,15 @@ def train_digit_sequence():
                 loss,training_generated, logits = sess.run([cost, generated, generated_logits], feed_dict={x: batch_x, y: batch_y,
                                            image: images, mask: masks})
                 train_acc = calculate_accuracy(training_generated, batch_x)
-                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc) + ", logits=" + str(logits))
-
+                #print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc) + ", logits=" + str(logits))
+		print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc))
                 test_batch_x, test_batch_y, test_images, test_masks = dataLoader.next_test_batch(batch_size)
                 samples = sess.run(generated, feed_dict={x: test_batch_x, y: test_batch_y,
                                                    image: test_images, mask: test_masks})
                 test_acc = calculate_accuracy(samples, test_batch_x)
                 print("Iter " + str(step*batch_size) + ", Test Accuracy= " + str(test_acc))
 
-                save_path = saver.save(sess, "/tmp/im2latex.ckpt")
+                save_path = saver.save(sess, "model/im2latex.ckpt")
                 print("Model saved in file: %s" % save_path)
 
                 sess.run(update_ops[0], feed_dict={summary_placeholders[0]:float(loss)})
