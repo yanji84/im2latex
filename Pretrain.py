@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 from vgg16 import *
+from alexnet import *
 
 debug = True
 batch_size = 128
@@ -66,7 +67,8 @@ if __name__ == '__main__':
   y = tf.placeholder(tf.float32, [None, 10])
 
   load()
-  vgg = vgg16(x, y)
+  #vgg = vgg16(x, y)
+  cnn = alexnet(x, y)
   
   init = tf.initialize_all_variables()
   saver = tf.train.Saver()
@@ -89,13 +91,13 @@ if __name__ == '__main__':
           sess.run(vgg.optimizer, feed_dict={x: images, y: ys})
           if step % display_step == 0:
               # Calculate batch loss and accuracy
-              loss, acc, probs = sess.run([vgg.cost,vgg.accuracy,vgg.prob], feed_dict={x: images,
+              loss, acc, logits = sess.run([cnn.cost,cnn.accuracy,cnn.logits], feed_dict={x: images,
                                                                 y: ys})
               print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
                     "{:.6f}".format(loss) + ", Training Accuracy= " + \
                     "{:.5f}".format(acc))
               
-              print probs
+              print logits
               print ys
 
               save_path = saver.save(sess, "vggmodel/im2latex.ckpt")
