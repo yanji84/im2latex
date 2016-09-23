@@ -20,6 +20,8 @@ class vgg16:
         self.fc_layers()
 
         #self.trainable = True
+        self.prob = tf.nn.softmax(self.fc3l)
+        self.labels = labels
 
         self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(self.fc3l, labels))
         self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)

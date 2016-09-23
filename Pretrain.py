@@ -88,12 +88,15 @@ if __name__ == '__main__':
           sess.run(vgg.optimizer, feed_dict={x: images, y: ys})
           if step % display_step == 0:
               # Calculate batch loss and accuracy
-              loss, acc = sess.run([vgg.cost,vgg.accuracy], feed_dict={x: images,
+              loss, acc, probs, labels = sess.run([vgg.cost,vgg.accuracy,vgg.prob,vgg.labels], feed_dict={x: images,
                                                                 y: ys})
               print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
                     "{:.6f}".format(loss) + ", Training Accuracy= " + \
                     "{:.5f}".format(acc))
               
+              print probs
+              print labels
+
               save_path = saver.save(sess, "vggmodel/im2latex.ckpt")
               print("Model saved in file: %s" % save_path)
 
