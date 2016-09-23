@@ -88,7 +88,7 @@ if __name__ == '__main__':
       while step * batch_size < training_iters:
           images, ys = next(batch_size)
           # Run optimization op (backprop)
-          sess.run(vgg.optimizer, feed_dict={x: images, y: ys})
+          sess.run(cnn.optimizer, feed_dict={x: images, y: ys})
           if step % display_step == 0:
               # Calculate batch loss and accuracy
               loss, acc, logits = sess.run([cnn.cost,cnn.accuracy,cnn.logits], feed_dict={x: images,
