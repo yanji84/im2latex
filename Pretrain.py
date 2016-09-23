@@ -13,7 +13,8 @@ display_step = 1
 idx = 0
 step = 0
 
-imagePath = "/Users/jiyan/Desktop/class/"
+#imagePath = "/Users/jiyan/Desktop/class/"
+imagePath = "/home/deeplearningdev/class/"
 
 def load():
   global onehotLabels
