@@ -101,7 +101,7 @@ def train_digit_sequence():
                                            image: images, mask: masks})
                 train_acc = calculate_accuracy(training_generated, batch_x)
                 #print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc) + ", logits=" + str(logits))
-		print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc))
+                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + str(loss) + ", training acc=" + str(train_acc))
                 test_batch_x, test_batch_y, test_images, test_masks = dataLoader.next_test_batch(batch_size)
                 samples = sess.run(generated, feed_dict={x: test_batch_x, y: test_batch_y,
                                                    image: test_images, mask: test_masks})
