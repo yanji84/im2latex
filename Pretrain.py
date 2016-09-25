@@ -4,6 +4,8 @@ import cv2
 import math
 import random
 import os
+import sys
+import matplotlib.pyplot as plt
 from SvhnNet import *
 
 debug = False
@@ -92,7 +94,7 @@ def next(size, imgs, labels):
   batchLabels = np.array(labels)[indices]
   return batchImages,batchLabels
 
-if __name__ == '__main__':
+def train():
   x = tf.placeholder(tf.float32, [None, 32, 32, 3])
   y = tf.placeholder(tf.float32, [None, 10])
 
@@ -162,6 +164,45 @@ if __name__ == '__main__':
       for i, x in enumerate(incorrect):
         cv2.imwrite("incorrect/img" + str(i) + ".jpg", x)
 
+
+if __name__ == '__main__':
+  if len(sys.argv) == 1:
+    train()
+  else:
+    # output pred for passed in image
+    fileName = str(sys.argv[1])
+    img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (32, 32))
+
+    # white wash image
+    if whiteWash:
+      imgMean = np.mean(img)
+      #std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
+      img = img.astype(np.float32)
+      img -= imgMean
+      #img /= std
+
+    x = tf.placeholder(tf.float32, [None, 32, 32, 3])
+    y = tf.placeholder(tf.float32, [None, 10])
+    cnn = SvhnNet(x, y)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        checkpoint = tf.train.get_checkpoint_state(modelPath)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            saver.restore(sess, checkpoint.model_checkpoint_path)
+            print "successfully loaded model"
+            dummyLabel = [0] * 10
+            logits = sess.run(cnn.logits, feed_dict={x: [img],
+                                                       y: [dummyLabel]})
+            print logits[0]
+            objects = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
+            yPos = np.arange(len(objects))
+             
+            plt.bar(yPos, logits[0], align='center', alpha=0.5)
+            plt.xticks(yPos, objects)
+            plt.ylabel('Unnormalized Probability (logits)')
+            plt.title('Digit')
+             
+            plt.show()
 
 
 
