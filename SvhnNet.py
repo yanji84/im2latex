@@ -5,7 +5,7 @@ class SvhnNet:
       print imgs.get_shape().ndims
       #imgs = tf.image.random_brightness(imgs,max_delta=63)
       #imgs = tf.image.random_contrast(imgs,lower=0.2, upper=1.8)
-      tf.image_summary('images', imgs, max_images = 10)
+      tf.image_summary('images', imgs, max_images = 3)
 
       # conv1
       with tf.variable_scope('conv1') as scope:
@@ -16,6 +16,13 @@ class SvhnNet:
         bias = tf.nn.bias_add(conv, biases)
         conv1 = tf.nn.relu(bias, name=scope.name)
         self.activation_summary(conv1)
+
+        with tf.variable_scope('visualization'):
+            x_min = tf.reduce_min(kernel)
+            x_max = tf.reduce_max(kernel)
+            kernel_0_to_1 = (kernel - x_min) / (x_max - x_min)
+            kernel_transposed = tf.transpose (kernel_0_to_1, [3, 0, 1, 2])
+            tf.image_summary('conv1/filters', kernel_transposed, max_images=64)
 
       # pool1
       pool1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1],
@@ -34,6 +41,14 @@ class SvhnNet:
         bias = tf.nn.bias_add(conv, biases)
         conv2 = tf.nn.relu(bias, name=scope.name)
         self.activation_summary(conv2)
+
+        with tf.variable_scope('visualization'):
+            x_min = tf.reduce_min(kernel)
+            x_max = tf.reduce_max(kernel)
+            kernel_0_to_1 = (kernel - x_min) / (x_max - x_min)
+            kernel_transposed = tf.transpose (kernel_0_to_1, [3, 0, 1, 2])
+            tf.image_summary('conv2/filters', kernel_transposed, max_images=64)
+
     
       # norm2
       norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
