@@ -6,8 +6,9 @@ import random
 import os
 from SvhnNet import *
 
-debug = True
+debug = False
 
+whiteWash = False
 dataRatio = [0.4,0.4,0.2] # train, test, validate
 
 allLabelsTrain = []
@@ -20,15 +21,14 @@ validateFiles = []
 
 batch_size = 128
 training_iters = 1000000 # in terms of sample size
-training_iters = 1000 # in terms of sample size
 onehotLabels = None
 display_step = 1 # how often to print details
 step = 0
 
-imagePath = "/Users/jiyan/Desktop/class/"
-logPath = "svnhlog"
+#imagePath = "/Users/jiyan/Desktop/class/"
+logPath = "svhnlogs"
 modelPath = "svhnModel/"
-#imagePath = "/home/deeplearningdev/class/"
+imagePath = "/home/deeplearningdev/class/"
 
 def setupSummaries():
   with tf.variable_scope('monitor') as scope:
@@ -62,11 +62,12 @@ def load():
       img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (32, 32))
 
       # white wash image
-      #imgMean = np.mean(img)
-      #std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
-      #img = img.astype(np.float32)
-      #img -= imgMean
-      #img /= std
+      if whiteWash:
+        imgMean = np.mean(img)
+        std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
+        img = img.astype(np.float32)
+        img -= imgMean
+        img /= std
 
       allImages.append(img)
       allLabels.append(parts[1])
@@ -86,8 +87,9 @@ def load():
   allLabelsValidate = onehotLabels[testIdx:]
 
 def next(size, imgs, labels):
-  batchImages = random.sample(imgs, size)
-  batchLabels = random.sample(labels, size)
+  indices = random.sample(range(len(imgs)), size)
+  batchImages = np.array(imgs)[indices]
+  batchLabels = np.array(labels)[indices]
   return batchImages,batchLabels
 
 if __name__ == '__main__':
