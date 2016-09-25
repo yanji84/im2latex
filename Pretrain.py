@@ -21,10 +21,11 @@ allLabelsValidate = []
 allImagesValidate = []
 validateFiles = []
 
-batch_size = 128
-training_iters = 1000000 # in terms of sample size
+imageSize = 32
+batchSize = 128
+trainingIters = 1000000 # in terms of sample size
 onehotLabels = None
-display_step = 1 # how often to print details
+displayStep = 1 # how often to print details
 step = 0
 
 #imagePath = "/Users/jiyan/Desktop/class/"
@@ -61,7 +62,7 @@ def load():
       parts = line.split(",")
       fileName = imagePath + parts[0]
       print fileName
-      img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (32, 32))
+      img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (imageSize, imageSize))
 
       # white wash image
       if whiteWash:
@@ -95,7 +96,7 @@ def next(size, imgs, labels):
   return batchImages,batchLabels
 
 def train():
-  x = tf.placeholder(tf.float32, [None, 32, 32, 3])
+  x = tf.placeholder(tf.float32, [None, imageSize, imageSize, 3])
   y = tf.placeholder(tf.float32, [None, 10])
 
   load()
@@ -115,21 +116,21 @@ def train():
           print "successfully loaded checkpoint"
 
       step = 1
-      while step * batch_size < training_iters:
-          trainImages, trainLabels = next(batch_size, allImagesTrain, allLabelsTrain)
+      while step * batchSize < trainingIters:
+          trainImages, trainLabels = next(batchSize, allImagesTrain, allLabelsTrain)
           sess.run(cnn.optimizer, feed_dict={x: trainImages, y: trainLabels})
-          if step % display_step == 0:
+          if step % displayStep == 0:
               # Calculate training loss and accuracy
               loss, trainAcc = sess.run([cnn.cost,cnn.accuracy], feed_dict={x: trainImages,
                                                                             y: trainLabels})
               # calculate test accuracy
-              testImages, testLabels = next(batch_size, allImagesTest, allLabelsTest)
+              testImages, testLabels = next(batchSize, allImagesTest, allLabelsTest)
               testAcc = sess.run(cnn.accuracy, feed_dict={x: testImages, y: testLabels})
               sess.run([monitorOps[0], monitorOps[1], monitorOps[2]], feed_dict={monitorPh[0]:float(loss),
                                                                                  monitorPh[1]:trainAcc,
                                                                                  monitorPh[2]:testAcc})
 
-              print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
+              print("Iter " + str(step*batchSize) + ", Minibatch Loss= " + \
                     "{:.6f}".format(loss) + ", Training Accuracy= " + \
                     "{:.5f}".format(trainAcc) + ", Test Accuracy= " + "{:.5f}".format(testAcc))
               
@@ -171,7 +172,7 @@ if __name__ == '__main__':
   else:
     # output pred for passed in image
     fileName = str(sys.argv[1])
-    img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (32, 32))
+    img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (imageSize, imageSize))
 
     # white wash image
     if whiteWash:
@@ -181,7 +182,7 @@ if __name__ == '__main__':
       img -= imgMean
       #img /= std
 
-    x = tf.placeholder(tf.float32, [None, 32, 32, 3])
+    x = tf.placeholder(tf.float32, [None, imageSize, imageSize, 3])
     y = tf.placeholder(tf.float32, [None, 10])
     cnn = SvhnNet(x, y)
     saver = tf.train.Saver()
