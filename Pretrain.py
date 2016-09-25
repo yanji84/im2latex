@@ -8,7 +8,7 @@ from SvhnNet import *
 
 debug = False
 
-whiteWash = False
+whiteWash = True
 dataRatio = [0.4,0.4,0.2] # train, test, validate
 
 allLabelsTrain = []
@@ -64,10 +64,10 @@ def load():
       # white wash image
       if whiteWash:
         imgMean = np.mean(img)
-        std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
+        #std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
         img = img.astype(np.float32)
         img -= imgMean
-        img /= std
+        #img /= std
 
       allImages.append(img)
       allLabels.append(parts[1])
