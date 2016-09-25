@@ -2,7 +2,6 @@ import tensorflow as tf
 
 class SvhnNet:
     def __init__(self, imgs, labels):
-      print imgs.get_shape().ndims
       #imgs = tf.image.random_brightness(imgs,max_delta=63)
       #imgs = tf.image.random_contrast(imgs,lower=0.2, upper=1.8)
       tf.image_summary('images', imgs, max_images = 3)

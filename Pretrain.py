@@ -96,6 +96,9 @@ def next(size, imgs, labels):
   return batchImages,batchLabels
 
 def train():
+  global allImagesValidate
+  global allLabelsValidate
+
   x = tf.placeholder(tf.float32, [None, imageSize, imageSize, 3])
   y = tf.placeholder(tf.float32, [None, 10])
 
