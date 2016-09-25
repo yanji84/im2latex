@@ -2,24 +2,57 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import math
-from vgg16 import *
-from alexnet import *
+import random
+import os
+from SvhnNet import *
 
 debug = True
+
+dataRatio = [0.4,0.4,0.2] # train, test, validate
+
+allLabelsTrain = []
+allImagesTrain = []
+allLabelsTest = []
+allImagesTest = []
+allLabelsValidate = []
+allImagesValidate = []
+validateFiles = []
+
 batch_size = 128
-training_iters = 1000000
+training_iters = 1000000 # in terms of sample size
+training_iters = 1000 # in terms of sample size
 onehotLabels = None
-allLabels = []
-allImages = []
-display_step = 1
-idx = 0
+display_step = 1 # how often to print details
 step = 0
 
 imagePath = "/Users/jiyan/Desktop/class/"
+logPath = "svnhlog"
+modelPath = "svhnModel/"
 #imagePath = "/home/deeplearningdev/class/"
+
+def setupSummaries():
+  with tf.variable_scope('monitor') as scope:
+    loss = tf.Variable(0.0)
+    tf.scalar_summary("Loss", loss)
+    trainAcc = tf.Variable(0.0)
+    tf.scalar_summary("Train Accuracy", trainAcc)
+    testAcc = tf.Variable(0.0)
+    tf.scalar_summary("Test Accuracy", testAcc)
+    summaryVars = [loss, trainAcc, testAcc]
+    summaryPlaceholders = [tf.placeholder("float") for i in range(len(summaryVars))]
+    updateOps = [summaryVars[i].assign(summaryPlaceholders[i]) for i in range(len(summaryVars))]
+    return summaryPlaceholders, updateOps
 
 def load():
   global onehotLabels
+  global allImagesTrain
+  global allLabelsTrain
+  global allImagesTest
+  global allLabelsTest
+  global allImagesValidate
+  global allLabelsValidate
+  allImages = []
+  allLabels = []
   with open("digit.out") as f:
     content = f.readlines()
     for line in content:
@@ -29,72 +62,104 @@ def load():
       img = cv2.resize(cv2.imread(fileName, cv2.IMREAD_UNCHANGED), (32, 32))
 
       # white wash image
-      mn = np.mean(img)
-      y = img.astype(np.float32)
-      y -= mn
-      img_afterww = y
+      #imgMean = np.mean(img)
+      #std = np.sqrt(np.sum(np.square(img - imgMean)) / (32 * 32))
+      #img = img.astype(np.float32)
+      #img -= imgMean
+      #img /= std
 
-      allImages.append(img_afterww)
+      allImages.append(img)
       allLabels.append(parts[1])
-      if debug and len(allLabels) > 10:
+      if debug and len(allLabels) > 1000:
         break
 
-  labels = np.array(allLabels)
   onehotLabels = np.zeros((len(allLabels), 10))
   onehotLabels[np.arange(len(allLabels)), allLabels] = 1
 
-def next(size):
-  global idx
-  print idx
-  startIdx = idx
-  endIdx = idx + size
+  trainIdx = int(len(allLabels) * dataRatio[0])
+  testIdx = int(trainIdx + len(allLabels) * dataRatio[1])
+  allImagesTrain = allImages[:trainIdx]
+  allLabelsTrain = onehotLabels[:trainIdx]
+  allImagesTest = allImages[trainIdx:testIdx]
+  allLabelsTest = onehotLabels[trainIdx:testIdx]
+  allImagesValidate = allImages[testIdx:]
+  allLabelsValidate = onehotLabels[testIdx:]
 
-  if endIdx >= len(allLabels):
-      endIdx = len(allLabels) - 1
-
-  images = allImages[startIdx:endIdx]
-  ys = onehotLabels[startIdx:endIdx]
-  idx = endIdx
-  if idx >= len(allLabels) - 1:
-      idx = 0
-  return images,ys
+def next(size, imgs, labels):
+  batchImages = random.sample(imgs, size)
+  batchLabels = random.sample(labels, size)
+  return batchImages,batchLabels
 
 if __name__ == '__main__':
   x = tf.placeholder(tf.float32, [None, 32, 32, 3])
   y = tf.placeholder(tf.float32, [None, 10])
 
   load()
-  #vgg = vgg16(x, y)
-  cnn = alexnet(x, y)
-  
+  cnn = SvhnNet(x, y)
+  monitorPh, monitorOps = setupSummaries()
   init = tf.initialize_all_variables()
   saver = tf.train.Saver()
-  summary_op = tf.merge_all_summaries()
+  summaryOps = tf.merge_all_summaries()
   with tf.Session() as sess:
       sess.run(init)
-      writer = tf.train.SummaryWriter("vgglogs", sess.graph)
-
-      checkpoint = tf.train.get_checkpoint_state("vggmodel/")
+      writer = tf.train.SummaryWriter(logPath, sess.graph)
+      if not os.path.exists(modelPath):
+        os.makedirs(modelPath)
+      checkpoint = tf.train.get_checkpoint_state(modelPath)
       if checkpoint and checkpoint.model_checkpoint_path:
           saver.restore(sess, checkpoint.model_checkpoint_path)
           print "successfully loaded checkpoint"
 
       step = 1
-      # Keep training until reach max iterations
       while step * batch_size < training_iters:
-          images, ys = next(batch_size)
-          # Run optimization op (backprop)
-          sess.run(cnn.optimizer, feed_dict={x: images, y: ys})
+          trainImages, trainLabels = next(batch_size, allImagesTrain, allLabelsTrain)
+          sess.run(cnn.optimizer, feed_dict={x: trainImages, y: trainLabels})
           if step % display_step == 0:
-              # Calculate batch loss and accuracy
-              loss, acc, summary_str = sess.run([cnn.cost,cnn.accuracy,summary_op], feed_dict={x: images,
-                                                                y: ys})
+              # Calculate training loss and accuracy
+              loss, trainAcc = sess.run([cnn.cost,cnn.accuracy], feed_dict={x: trainImages,
+                                                                            y: trainLabels})
+              # calculate test accuracy
+              testImages, testLabels = next(batch_size, allImagesTest, allLabelsTest)
+              testAcc = sess.run(cnn.accuracy, feed_dict={x: testImages, y: testLabels})
+              sess.run([monitorOps[0], monitorOps[1], monitorOps[2]], feed_dict={monitorPh[0]:float(loss),
+                                                                                 monitorPh[1]:trainAcc,
+                                                                                 monitorPh[2]:testAcc})
+
               print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
                     "{:.6f}".format(loss) + ", Training Accuracy= " + \
-                    "{:.5f}".format(acc))
+                    "{:.5f}".format(trainAcc) + ", Test Accuracy= " + "{:.5f}".format(testAcc))
               
-              save_path = saver.save(sess, "vggmodel/im2latex.ckpt")
-              print("Model saved in file: %s" % save_path)
-              writer.add_summary(summary_str, step)
+              savePath = saver.save(sess, modelPath + "im2latex.ckpt")
+              print("Model saved in file: %s" % savePath)
+              summaryStr = sess.run(summaryOps, feed_dict={x: trainImages,
+                                                           y: trainLabels})
+              writer.add_summary(summaryStr, step)
+              writer.add_summary(summaryStr, step)
           step += 1
+
       print("Optimization Finished!")
+      validateImages, validateLabels = next(len(allImagesValidate), allImagesValidate, allLabelsValidate)
+      # Calculate validate loss and accuracy
+      validateAcc, correctPred = sess.run([cnn.accuracy, cnn.correctPred], feed_dict={x: validateImages,
+                                                                                      y: validateLabels})
+      print("Validation Accuracy= " + "{:.5f}".format(validateAcc))
+      correctIndices = [i for i, x in enumerate(correctPred) if x]
+      incorrectIndices = [i for i, x in enumerate(correctPred) if not x]
+      allImagesValidate = np.array(allImagesValidate)
+      correct = allImagesValidate[correctIndices]
+      incorrect = allImagesValidate[incorrectIndices]
+
+      if not os.path.exists("correct"):
+        os.makedirs("correct")
+      if not os.path.exists("incorrect"):
+        os.makedirs("incorrect")
+
+      for i, x in enumerate(correct):
+        cv2.imwrite("correct/img" + str(i) + ".jpg", x)
+
+      for i, x in enumerate(incorrect):
+        cv2.imwrite("incorrect/img" + str(i) + ".jpg", x)
+
+
+
+

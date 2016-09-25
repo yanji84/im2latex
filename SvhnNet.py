@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-class alexnet:
+class SvhnNet:
     def __init__(self, imgs, labels):
       print imgs.get_shape().ndims
       #imgs = tf.image.random_brightness(imgs,max_delta=63)
@@ -81,11 +81,8 @@ class alexnet:
 
         self.cost = tf.add_n(tf.get_collection('losses'), name='total_loss')
         self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)
-        self.correct_pred = tf.equal(tf.argmax(self.logits, 1), tf.argmax(labels, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
-
-        tf.scalar_summary("Loss", self.cost)
-        tf.scalar_summary("Train Accuracy", self.accuracy)
+        self.correctPred = tf.equal(tf.argmax(self.logits, 1), tf.argmax(labels, 1))
+        self.accuracy = tf.reduce_mean(tf.cast(self.correctPred, tf.float32))
 
     def variable_on_cpu(self, name, shape, initializer):
       with tf.device('/cpu:0'):
