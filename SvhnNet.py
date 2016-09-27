@@ -72,23 +72,21 @@ class SvhnNet:
         self.activation_summary(local4)
 
       # softmax, i.e. softmax(WX + b)
-      with tf.variable_scope('softmax_linear') as scope:
-        weights = self.variable_with_weight_decay('weights', [192, 10],
+      with tf.variable_scope('final') as scope:
+        weights = self.variable_with_weight_decay('weights', [192, 4],
                                               stddev=1/192.0, wd=0.0)
-        biases = self.variable_on_cpu('biases', [10],
+        biases = self.variable_on_cpu('biases', [4],
                                   tf.constant_initializer(0.0))
-        self.logits = tf.nn.xw_plus_b(local4, weights, biases, name=scope.name)
-        self.activation_summary(self.logits)
+        self.bbox = tf.nn.xw_plus_b(local4, weights, biases, name=scope.name)
+        self.activation_summary(self.bbox)
 
       with tf.variable_scope('results') as scope:
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(self.logits, labels, name='cross_entropy_per_example')
-        cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
-        tf.add_to_collection('losses', cross_entropy_mean)
+        loss = tf.reduce_mean(tf.reduce_sum(tf.square(labels - self.bbox), [1]), name='mean_square_error')
+
+        tf.add_to_collection('losses', loss)
 
         self.cost = tf.add_n(tf.get_collection('losses'), name='total_loss')
         self.optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)
-        self.correctPred = tf.equal(tf.argmax(self.logits, 1), tf.argmax(labels, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(self.correctPred, tf.float32))
 
     def variable_on_cpu(self, name, shape, initializer):
       with tf.device('/cpu:0'):
