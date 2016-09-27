@@ -29,7 +29,7 @@ step = 0
 #imagePath = "/Users/jiyan/Desktop/class/"
 logPath = "bboxlogs"
 modelPath = "bboxModel/"
-imagePath = "/Users/jiyan/Downloads/train/"
+imagePath = "/home/deeplearningdev/im2latex/train/"
 
 def setupSummaries():
   with tf.variable_scope('monitor') as scope:
