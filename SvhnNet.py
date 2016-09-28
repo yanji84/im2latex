@@ -40,44 +40,19 @@ class SvhnNet:
         bias = tf.nn.bias_add(conv, biases)
         conv2 = tf.nn.relu(bias, name=scope.name)
         self.activation_summary(conv2)
-    
-      # norm2
-      norm2 = tf.nn.lrn(conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
-                        name='norm2')
 
-      # pool2
-      pool2 = tf.nn.max_pool(norm2, ksize=[1, 3, 3, 1],
-                             strides=[1, 2, 2, 1], padding='SAME', name='pool2')
-
-      # local3
-      with tf.variable_scope('local3') as scope:
-        # Move everything into depth so we can perform a single matrix multiply.
-        dim = 1
-        for d in pool2.get_shape()[1:].as_list():
-          dim *= d
-        reshape = tf.reshape(pool2, [-1, dim])
-
-        weights = self.variable_with_weight_decay('weights', shape=[dim, 384],
-                                              stddev=0.04, wd=0.004)
-        biases = self.variable_on_cpu('biases', [384], tf.constant_initializer(0.1))
-        local3 = tf.nn.relu_layer(reshape, weights, biases, name=scope.name)
-        self.activation_summary(local3)
-
-      # local4
-      with tf.variable_scope('local4') as scope:
-        weights = self.variable_with_weight_decay('weights', shape=[384, 192],
-                                              stddev=0.04, wd=0.004)
-        biases = self.variable_on_cpu('biases', [192], tf.constant_initializer(0.1))
-        local4 = tf.nn.relu_layer(local3, weights, biases, name=scope.name)
-        self.activation_summary(local4)
+      dim = 1
+      for d in conv2.get_shape()[1:].as_list():
+        dim *= d
+      reshape = tf.reshape(conv2, [-1, dim])
 
       # softmax, i.e. softmax(WX + b)
       with tf.variable_scope('final') as scope:
-        weights = self.variable_with_weight_decay('weights', [192, 4],
-                                              stddev=1/192.0, wd=0.0)
+        weights = self.variable_with_weight_decay('weights', [dim, 4],
+                                              stddev=1/dim, wd=0.004)
         biases = self.variable_on_cpu('biases', [4],
                                   tf.constant_initializer(0.0))
-        self.bbox = tf.nn.xw_plus_b(local4, weights, biases, name=scope.name)
+        self.bbox = tf.nn.xw_plus_b(reshape, weights, biases, name=scope.name)
         self.activation_summary(self.bbox)
 
       with tf.variable_scope('results') as scope:
