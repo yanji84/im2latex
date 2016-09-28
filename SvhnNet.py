@@ -73,11 +73,15 @@ class SvhnNet:
 
       # softmax, i.e. softmax(WX + b)
       with tf.variable_scope('final') as scope:
-        weights = self.variable_with_weight_decay('weights', [192, 4],
+        weights1 = self.variable_with_weight_decay('weights_local4', [192, 4],
                                               stddev=1/192.0, wd=0.0)
+        weights2 = self.variable_with_weight_decay('weights_conv2', [dim, 4],
+                                              stddev=1/dim.0, wd=0.0)
         biases = self.variable_on_cpu('biases', [4],
                                   tf.constant_initializer(0.0))
-        self.bbox = tf.nn.xw_plus_b(local4, weights, biases, name=scope.name)
+        
+        self.bbox = tf.matmul(local4, weights1) + tf.matmul(reshape, weights2) + biases
+
         self.activation_summary(self.bbox)
 
       with tf.variable_scope('results') as scope:
