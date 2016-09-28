@@ -76,7 +76,7 @@ class SvhnNet:
         weights1 = self.variable_with_weight_decay('weights_local4', [192, 4],
                                               stddev=1/192.0, wd=0.0)
         weights2 = self.variable_with_weight_decay('weights_conv2', [dim, 4],
-                                              stddev=1/dim.0, wd=0.0)
+                                              stddev=1/dim, wd=0.0)
         biases = self.variable_on_cpu('biases', [4],
                                   tf.constant_initializer(0.0))
         
